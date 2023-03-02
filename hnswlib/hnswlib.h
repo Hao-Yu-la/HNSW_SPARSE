@@ -114,6 +114,9 @@ static bool AVX512Capable() {
 
 namespace hnswlib {
 typedef size_t labeltype;
+typedef unsigned int vectorsizeint;
+typedef float vectordata_t;
+
 
 // This can be extended to store state for filtering (e.g. from a std::set)
 class BaseFilterFunctor {
@@ -140,7 +143,7 @@ static void readBinaryPOD(std::istream &in, T &podRef) {
 }
 
 template<typename MTYPE>
-using DISTFUNC = MTYPE(*)(const void *, const void *, const void *);
+using DISTFUNC = MTYPE(*)(const void *, const void *);
 
 template<typename MTYPE>
 class SpaceInterface {
@@ -193,7 +196,7 @@ AlgorithmInterface<dist_t>::searchKnnCloserFirst(const void* query_data, size_t 
 }
 }  // namespace hnswlib
 
-#include "space_l2.h"
+// #include "space_l2.h"
 #include "space_ip.h"
 #include "bruteforce.h"
 #include "hnswalg.h"

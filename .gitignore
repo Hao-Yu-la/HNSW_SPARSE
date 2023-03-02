@@ -2,6 +2,7 @@ hnswlib.egg-info/
 build/
 dist/
 tmp/
+eigen-3.4.0/
 python_bindings/tests/__pycache__/
 *.pyd
 hnswlib.cpython*.so
