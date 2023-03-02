@@ -4,8 +4,8 @@
 
 int main() {
     int dim = 200000;//16;               // Dimension of the elements
-    int max_elements = 1000;//10000;   // Maximum number of elements, should be known beforehand
-    int M = 16;                 // Tightly connected with internal dimensionality of the data
+    int max_elements = 10;//10000;   // Maximum number of elements, should be known beforehand
+    int M = 64;                 // Tightly connected with internal dimensionality of the data
                                 // strongly affects the memory consumption
     int ef_construction = 20;  // Controls index search speed/build speed tradeoff
 
@@ -23,7 +23,7 @@ int main() {
     for (int i = 0; i < max_elements; i++)
     {
         //generate none_zero_num
-        hnswlib::vectorsizeint none_zero_num = rand() % none_zero_num_bound + 1;
+        hnswlib::vectorsizeint none_zero_num = 11;//rand() % none_zero_num_bound + 1;
         data[i] = new char[none_zero_num * (sizeof(hnswlib::vectordata_t) + \
             sizeof(hnswlib::vectorsizeint)) + sizeof(hnswlib::vectorsizeint)];
         hnswlib::vectorsizeint len = none_zero_num;
@@ -99,7 +99,6 @@ int main() {
             std::cout << "i: " << i << "\n";
             std::cout << "label: " << label << "\n";
             std::cout << "dist: " << dist << "\n";
-
         }
     }
     finish2 = clock();
@@ -111,21 +110,27 @@ int main() {
     std::cout << "Time of addPoint: " << time1 << "\n";
     std::cout << "Time of searchKnn: " << time2 << "\n";
 
-    // // Serialize index
-    // std::string hnsw_path = "hnsw.bin";
-    // alg_hnsw->saveIndex(hnsw_path);
-    // delete alg_hnsw;
+    // Serialize index
+    std::string hnsw_path = "hnsw.bin";
+    alg_hnsw->saveIndex(hnsw_path);
+    delete alg_hnsw;
 
-    // // Deserialize index and check recall
-    // alg_hnsw = new hnswlib::HierarchicalNSW<float>(&space, hnsw_path);
-    // correct = 0;
-    // for (int i = 0; i < max_elements; i++) {
-    //     std::priority_queue<std::pair<float, hnswlib::labeltype>> result = alg_hnsw->searchKnn(data + i * dim, 1);
-    //     hnswlib::labeltype label = result.top().second;
-    //     if (label == i) correct++;
-    // }
-    // recall = (float)correct / max_elements;
-    // std::cout << "Recall of deserialized index: " << recall << "\n";
+    // Deserialize index and check recall
+    alg_hnsw = new hnswlib::HierarchicalNSW<float>(&space, hnsw_path);
+    correct = 0;
+    for (int i = 0; i < max_elements; i++) {
+        std::vector<std::pair<float, hnswlib::labeltype>> result = alg_hnsw->searchKnnCloserFirst(data[i], 3);
+        hnswlib::labeltype label = result[0].second;
+        float dist = result[0].first;
+        if (label == i) correct++;
+        if (label != i){
+            std::cout << "i: " << i << "\n";
+            std::cout << "label: " << label << "\n";
+            std::cout << "dist: " << dist << "\n";
+        }
+    }
+    recall = (float)correct / max_elements;
+    std::cout << "Recall of deserialized index: " << recall << "\n";
 
     for (int i = 0; i < max_elements; i++)
     {

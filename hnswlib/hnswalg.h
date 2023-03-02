@@ -613,8 +613,8 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         writeBinaryPOD(output, offsetLevel0_);
         writeBinaryPOD(output, max_elements_);
         writeBinaryPOD(output, cur_element_count);
-        writeBinaryPOD(output, size_data_per_element_);
-        writeBinaryPOD(output, label_offset_);
+        // writeBinaryPOD(output, size_data_per_element_);
+        // writeBinaryPOD(output, label_offset_);
         writeBinaryPOD(output, offsetData_);
         writeBinaryPOD(output, maxlevel_);
         writeBinaryPOD(output, enterpoint_node_);
@@ -631,7 +631,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         size_t element_size = 0;
         for (size_t i = 0; i < cur_element_count; i++) {
             // data comprises of the vector length and the vector non-zreo elements and their indices
-            vactor_len = *((vectorsizeint *) data_level0_point_[i]);
+            vactor_len = *((vectorsizeint *)(data_level0_point_[i] + offsetData_));
             data_size = sizeof(vectorsizeint) + vactor_len * (sizeof(vectorsizeint) + sizeof(vectordata_t));
             element_size = size_links_level0_ + data_size + sizeof(labeltype);
             output.write(data_level0_point_[i], element_size);
@@ -666,8 +666,8 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         if (max_elements < cur_element_count)
             max_elements = max_elements_;
         max_elements_ = max_elements;
-        readBinaryPOD(input, size_data_per_element_);
-        readBinaryPOD(input, label_offset_);
+        // readBinaryPOD(input, size_data_per_element_);
+        // readBinaryPOD(input, label_offset_);
         readBinaryPOD(input, offsetData_);
         readBinaryPOD(input, maxlevel_);
         readBinaryPOD(input, enterpoint_node_);
@@ -678,9 +678,9 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         readBinaryPOD(input, mult_);
         readBinaryPOD(input, ef_construction_);
 
-        data_size_ = s->get_data_size();
+        // data_size_ = s->get_data_size();
         fstdistfunc_ = s->get_dist_func();
-        dist_func_param_ = s->get_dist_func_param();
+        // dist_func_param_ = s->get_dist_func_param();
 
         auto pos = input.tellg();
 
@@ -702,7 +702,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         // if (input.tellg() != total_filesize)
         //     throw std::runtime_error("Index seems to be corrupted or unsupported");
 
-        input.clear();
+        // input.clear();
         /// Optional check end
 
         input.seekg(pos, input.beg);
@@ -714,21 +714,23 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         vectorsizeint vactor_len = 0;
         size_t data_size = 0;
         size_t element_size = 0;
+        size_links_level0_ = maxM0_ * sizeof(tableint) + sizeof(linklistsizeint);
         for (size_t i = 0; i < cur_element_count; i++) {
             // data comprises of the vector length and the vector non-zreo elements and their indices
+            pos = input.tellg();
+            input.seekg(size_links_level0_, input.cur);
             readBinaryPOD(input, vactor_len);
             data_size = sizeof(vectorsizeint) + vactor_len * (sizeof(vectorsizeint) + sizeof(vectordata_t));
             element_size = size_links_level0_ + data_size + sizeof(labeltype);
             data_level0_point_[i] = (char *) malloc(element_size);
             if (data_level0_point_[i] == nullptr)
                 throw std::runtime_error("Not enough memory: loadIndex failed to allocate level0");
-            memcpy(data_level0_point_[i], &vactor_len, sizeof(vectorsizeint));
-            input.read(data_level0_point_[i] + sizeof(vectorsizeint), element_size - sizeof(vectorsizeint));
+            input.seekg(pos, input.beg);
+            input.read(data_level0_point_[i], element_size);
         }
 
         size_links_per_element_ = maxM_ * sizeof(tableint) + sizeof(linklistsizeint);
 
-        size_links_level0_ = maxM0_ * sizeof(tableint) + sizeof(linklistsizeint);
         std::vector<std::mutex>(max_elements).swap(link_list_locks_);
         std::vector<std::mutex>(MAX_LABEL_OPERATION_LOCKS).swap(label_op_locks_);
 
